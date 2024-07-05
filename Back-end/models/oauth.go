@@ -21,10 +21,10 @@ var (
 		Endpoint:     github.Endpoint,
 	}
 	googleOauthConfig = &oauth2.Config{
-		ClientID:     "YOUR_GOOGLE_CLIENT_ID",
-		ClientSecret: "YOUR_GOOGLE_CLIENT_SECRET",
+		ClientID:     "422682803497-89tppg5j995kjthbrls07u0s5vc9ivkb.apps.googleusercontent.com",
+		ClientSecret: "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",
 		RedirectURL:  "http://localhost:8080/auth/google/callback",
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
 		Endpoint:     google.Endpoint,
 	}
 	oauthStateString = "randomstring"
@@ -220,6 +220,18 @@ func storeUserInDB(username, email, password, source string) int64 {
 	_, err = db.Exec(insertProfileQuery, existingUserID, username, email)
 	if err != nil {
 		log.Println("Error inserting profile:", err)
+	}
+	// Update username in users table if not already set
+	if source == "github" || source == "google" {
+		updateUserQuery := `
+			UPDATE users
+			SET username = ?
+			WHERE id = ?
+		`
+		_, err := db.Exec(updateUserQuery, username, existingUserID)
+		if err != nil {
+			log.Println("Error updating username in users table:", err)
+		}
 	}
 	return existingUserID
 }

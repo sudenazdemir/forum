@@ -10,6 +10,7 @@ import (
 
 func HandleProfile(w http.ResponseWriter, r *http.Request) {
 	var user handlers.User
+
 	cookie, err := r.Cookie("user_id")
 	if err != nil {
 		http.Error(w, "User ID not provided", http.StatusBadRequest)
