@@ -94,12 +94,14 @@ func HandleSubmitPost(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer file.Close()
 		// Ensure the uploads directory exists
-		if _, err := os.Stat("uploads"); os.IsNotExist(err) {
-			os.Mkdir("uploads", os.ModePerm)
+		uploadDir := filepath.Join("Back-end", "uploads")
+		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+			os.MkdirAll(uploadDir, os.ModePerm)
 		}
 
 		// Create file
-		imagePath = filepath.Join("uploads", handler.Filename)
+		fileName := handler.Filename
+		imagePath = filepath.Join(uploadDir, fileName)
 		out, err := os.Create(imagePath)
 		if err != nil {
 			http.Error(w, "Unable to create the file for writing", http.StatusInternalServerError)
@@ -112,6 +114,9 @@ func HandleSubmitPost(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Unable to save the file", http.StatusInternalServerError)
 			return
 		}
+
+		// Store only the relative path in the database
+		imagePath = filepath.Join("uploads", fileName)
 	} else if err != http.ErrMissingFile {
 		http.Error(w, "Error uploading file", http.StatusInternalServerError)
 		return
