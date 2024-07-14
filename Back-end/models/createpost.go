@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"forum/Back-end/handlers"
@@ -70,7 +71,7 @@ func HandleCreatePost(w http.ResponseWriter, r *http.Request) {
 
 func HandleSubmitPost(w http.ResponseWriter, r *http.Request) {
 	// Parse the form data
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
+	if err := r.ParseMultipartForm(20 << 20); err != nil { // 20 MB max memory
 		http.Error(w, "Unable to parse form", http.StatusBadRequest)
 		return
 	}
@@ -93,6 +94,28 @@ func HandleSubmitPost(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("image")
 	if err == nil {
 		defer file.Close()
+
+		// Check file size (20 MB limit)
+		if handler.Size > 20<<20 {
+			http.Error(w, "File size exceeds 20 MB", http.StatusBadRequest)
+			return
+		}
+
+		// Check file type
+		allowedTypes := []string{".gif", ".png", ".jpg", ".jpeg", ".webp"}
+		fileExt := strings.ToLower(filepath.Ext(handler.Filename))
+		isValidType := false
+		for _, ext := range allowedTypes {
+			if fileExt == ext {
+				isValidType = true
+				break
+			}
+		}
+		if !isValidType {
+			http.Error(w, "Invalid file type", http.StatusBadRequest)
+			return
+		}
+
 		// Ensure the uploads directory exists
 		uploadDir := filepath.Join("Back-end", "uploads")
 		if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
