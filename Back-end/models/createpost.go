@@ -102,7 +102,7 @@ func HandleSubmitPost(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Check file type
-		allowedTypes := []string{".gif", ".png", ".jpg", ".jpeg", ".webp"}
+		allowedTypes := []string{".gif", ".png", ".jpg", ".jpeg", ".webp", ".svg"}
 		fileExt := strings.ToLower(filepath.Ext(handler.Filename))
 		isValidType := false
 		for _, ext := range allowedTypes {
