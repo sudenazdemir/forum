@@ -95,7 +95,7 @@ func HandleSubmitPost(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer file.Close()
 
-		// Check file size (20 MB limit)
+		// Check file size (20 MB limit) 20--->20 bit sola yani 20 ile çarpmak   (1<<20)---->1 bayt a denk  20<<20= 20*(1<<20)
 		if handler.Size > 20<<20 {
 			http.Error(w, "File size exceeds 20 MB", http.StatusBadRequest)
 			return
