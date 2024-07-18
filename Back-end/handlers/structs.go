@@ -7,6 +7,7 @@ type User struct {
 	Email    string
 	Username string
 	Password string
+	Role     string
 }
 type Category struct {
 	ID          int

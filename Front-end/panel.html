@@ -1,16 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delete User</title>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="../styles/home.css">
+    <link href="https://fonts.cdnfonts.com/css/montreal?styles=28831" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+
 <body>
+    <header>
+        <div class="pages">
+            <img class="logo_image" src="../docs/WG.png" alt="logo">
+            <a class="page_label" href="/">Walk Global</a>
+            <a class="page_label" href="/create_post">Gönderi Oluştur</a>
+            <a class="page_label" href="/profile">Profil</a>
+            <form action="/logout" method="post" class="logout_form">
+                <button type="submit">Çıkış Yap</button>
+            </form>
+        </div>
+    </header>
+    <div class="posts">
+        <h1>Admin Panel</h1>
+        <div>
+            <h2>Posts</h2>
+           
+                {{ range .Posts }}
+                <p><strong>Gönderi:</strong> {{.Content}}</p>
+                <p><strong>Oluşturan Hesap:</strong> {{.Username}}</p>
+                {{ if .Image }}
+                    <img src="{{.Image}}" alt="Post Image">
+                {{ end }}
+                <form action="/delete_post?id={{ .ID }}" method="post" onsubmit="return deletePost(this)">
+                    <button type="submit">Gönderiyi Sil</button>
+                </form>
+                {{ end }}
+           
+        </div>
+    </div>
+    <div>
     <h2>Delete User</h2>
-    <form  method="post">
-        <label for="userId">User ID:</label>
-        <input type="text" id="userId" name="userId" required>
+    <form method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
         <button type="submit">Delete User</button>
     </form>
+</div>
 </body>
+
 </html>

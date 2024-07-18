@@ -37,7 +37,7 @@ func HandleLoginPost(w http.ResponseWriter, r *http.Request) {
 		defer loginDB.Close()
 
 		var user handlers.User
-		err = loginDB.QueryRow("SELECT id, username, password, email FROM users WHERE username = ? OR email = ?", username, username).Scan(&user.ID, &user.Username, &user.Password, &user.Email)
+		err = loginDB.QueryRow("SELECT id, username, password, email, role FROM users WHERE username = ? OR email = ?", username, username).Scan(&user.ID, &user.Username, &user.Password, &user.Email, &user.Role)
 		if err != nil {
 			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 			return
@@ -69,7 +69,12 @@ func HandleLoginPost(w http.ResponseWriter, r *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 		})
-
+		http.SetCookie(w, &http.Cookie{
+			Name:     "user_role",
+			Value:    user.Role,
+			Path:     "/",
+			HttpOnly: true,
+		})
 		// Redirect to profile page after successful login
 		http.Redirect(w, r, "/profile", http.StatusSeeOther)
 	}

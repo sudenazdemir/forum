@@ -30,7 +30,7 @@ func HandleProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	err = db.QueryRow("SELECT id, username, email FROM users WHERE id = ?", userID).Scan(&user.ID, &user.Username, &user.Email)
+	err = db.QueryRow("SELECT id, username, email, role FROM users WHERE id = ?", userID).Scan(&user.ID, &user.Username, &user.Email, &user.Role)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusInternalServerError)
 		return
@@ -169,6 +169,7 @@ func HandleProfile(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, map[string]interface{}{
 		"Username":      user.Username,
 		"Email":         user.Email,
+		"Role":          user.Role,
 		"LoggedIn":      true,
 		"Posts":         posts,
 		"LikedPosts":    likedPosts,

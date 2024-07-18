@@ -41,11 +41,12 @@ func CreateCommentLikesTable(database *sql.DB) {
 func CreateUserTable(database *sql.DB) {
 	createUsersTable := `
 	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		email TEXT UNIQUE NOT NULL,
-		username TEXT UNIQUE NOT NULL,
-		password TEXT NOT NULL
-	);`
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        email TEXT NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'user'
+    );`
 	_, err := database.Exec(createUsersTable)
 	if err != nil {
 		log.Fatalf("Users table creation failed: %s", err)

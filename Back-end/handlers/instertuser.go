@@ -34,12 +34,12 @@ func InsertUser(database *sql.DB, user User) (int64, error) {
 		}
 	}
 
-	insertUserSQL := `INSERT INTO users (email, username, password) VALUES (?, ?, ?)`
+	insertUserSQL := `INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)`
 	statement, err := tx.Prepare(insertUserSQL)
 	if err != nil {
 		return 0, err
 	}
-	res, err := statement.Exec(user.Email, user.Username, user.Password)
+	res, err := statement.Exec(user.Username, user.Email, user.Password, user.Role)
 	if err != nil {
 		return 0, err
 	}

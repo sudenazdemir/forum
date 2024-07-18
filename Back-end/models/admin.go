@@ -3,9 +3,9 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"forum/Back-end/handlers"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func HandleAdmin(w http.ResponseWriter, r *http.Request) {
@@ -20,30 +20,89 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not load panel template", http.StatusInternalServerError)
 		return
 	}
+	// Gönderileri çekmek için sorgu
+	rows1, err := db.Query(`
+		SELECT 
+			posts.id, posts.user_id, posts.title, posts.content, posts.image, posts.category_id, posts.created_at, posts.total_likes, posts.total_dislikes,
+			categories.name, users.username
+		FROM posts
+		JOIN categories ON posts.category_id = categories.id
+		JOIN users ON posts.user_id = users.id`)
+	if err != nil {
+		http.Error(w, "Could not retrieve posts", http.StatusInternalServerError)
+		return
+	}
+	defer rows1.Close()
 
-	if r.Method == http.MethodPost {
-		userIdStr := r.FormValue("userId")
-		userId, err := strconv.Atoi(userIdStr)
+	var posts []handlers.Post
+	for rows1.Next() {
+		var post handlers.Post
+		err := rows1.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Image, &post.Category, &post.CreatedAt, &post.Likes, &post.Dislikes, &post.CategoryName, &post.Username)
 		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusBadRequest)
+			http.Error(w, "Could not scan post", http.StatusInternalServerError)
 			return
 		}
 
-		if err := deletetable(db, userId); err != nil {
+		// Görüntü URL'sini oluşturun
+		if post.Image != "" {
+			post.Image = "/" + post.Image
+		}
+
+		// Yorumları çekmek için sorgu
+		rows2, err := db.Query(`
+			SELECT 
+				comments.id, comments.post_id, comments.user_id, comments.content, comments.created_at, users.username,
+				IFNULL(SUM(CASE WHEN comment_likes.like_type = 'like' THEN 1 ELSE 0 END), 0) AS likes,
+				IFNULL(SUM(CASE WHEN comment_likes.like_type = 'dislike' THEN 1 ELSE 0 END), 0) AS dislikes
+			FROM comments 
+			LEFT JOIN comment_likes ON comments.id = comment_likes.comment_id
+			JOIN users ON comments.user_id = users.id
+			WHERE comments.post_id = ?
+			GROUP BY comments.id`, post.ID)
+		if err != nil {
+			http.Error(w, "Could not retrieve comments", http.StatusInternalServerError)
+			return
+		}
+		defer rows2.Close()
+
+		var comments []handlers.Comment
+		for rows2.Next() {
+			var comment handlers.Comment
+			err := rows2.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt, &comment.Username, &comment.Likes, &comment.Dislikes)
+			if err != nil {
+				http.Error(w, "Could not scan comment", http.StatusInternalServerError)
+				return
+			}
+			comments = append(comments, comment)
+		}
+		post.Comments = comments
+
+		posts = append(posts, post)
+	}
+	data := map[string]interface{}{
+
+		"Posts": posts,
+	}
+	if r.Method == http.MethodPost {
+		username := r.FormValue("username")
+
+		if err := deletetable(db, username); err != nil {
 			http.Error(w, "Failed to delete user: "+err.Error(), http.StatusInternalServerError)
 			log.Println("Failed to delete user:", err)
 			return
 		}
 
-		fmt.Fprintf(w, "User with ID %d deleted successfully", userId)
+		fmt.Fprintf(w, "Username %s deleted successfully", username)
 	} else {
-		if err := tmpl.Execute(w, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		if err := tmpl.Execute(w, data); err != nil {
+			http.Error(w, "Could not execute template", http.StatusInternalServerError)
+			return
 		}
 	}
 }
 
-func deletetable(database *sql.DB, userId int) error {
+func deletetable(database *sql.DB, username string) error {
 	// Transaction başlat
 	tx, err := database.Begin()
 	if err != nil {
@@ -52,8 +111,8 @@ func deletetable(database *sql.DB, userId int) error {
 	defer tx.Rollback()
 
 	// Kullanıcıyı sil
-	deleteStmt := "DELETE FROM users WHERE id = ?;"
-	if _, err := tx.Exec(deleteStmt, userId); err != nil {
+	deleteStmt := "DELETE FROM users WHERE username = ?;"
+	if _, err := tx.Exec(deleteStmt, username); err != nil {
 		return err
 	}
 

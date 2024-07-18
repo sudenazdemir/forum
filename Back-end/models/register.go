@@ -48,6 +48,7 @@ func HandleRegisterPost(w http.ResponseWriter, r *http.Request) {
 			Email:    email,
 			Username: username,
 			Password: string(hashedPassword),
+			Role:     "user",
 		}
 		var userID int64
 		err = db.QueryRow("SELECT id FROM users WHERE email = ? OR username = ?", email, username).Scan(&userID)

@@ -54,7 +54,7 @@ func main() {
 	http.HandleFunc("/register", models.HandleRegister)
 	http.HandleFunc("/registerSubmit", models.HandleRegisterPost)
 	http.HandleFunc("/profile", models.HandleProfile)
-	http.HandleFunc("/panel", models.HandleAdmin)
+	http.HandleFunc("/panel", (models.HandleAdmin))
 	http.HandleFunc("/logout", models.HandleLogout)
 	http.HandleFunc("/submit_post", models.HandleSubmitPost)
 	http.HandleFunc("/create_post", models.HandleCreatePost)

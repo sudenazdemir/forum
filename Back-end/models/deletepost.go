@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 // Gönderi silme işlemi
@@ -19,12 +21,21 @@ func HandleDeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Kullanıcı kimliği alınır
-	cookie, err := r.Cookie("user_id")
+	userIDCookie, err := r.Cookie("user_id")
 	if err != nil {
-		http.Error(w, "User ID not provided", http.StatusBadRequest)
+		http.Error(w, "User ID not provided", http.StatusUnauthorized)
 		return
 	}
-	userID := cookie.Value
+	userID := userIDCookie.Value
+
+	// Kullanıcı rolü alınır
+	roleCookie, err := r.Cookie("user_role")
+	if err != nil || roleCookie.Value == "" {
+		http.Error(w, "Role not provided", http.StatusUnauthorized)
+
+		return
+	}
+	userRole := roleCookie.Value
 
 	db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
 	if err != nil {
@@ -32,16 +43,29 @@ func HandleDeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-	// Gönderinin kullanıcıya ait olup olmadığını kontrol et
-	var ownerID string
-	err = db.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&ownerID)
-	if err != nil {
-		http.Error(w, "Post not found", http.StatusNotFound)
-		return
+
+	// Eğer kullanıcı admin değilse gönderinin sahibini kontrol et
+	if userRole != "admin" {
+		var ownerID string
+		err = db.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&ownerID)
+		if err != nil {
+			http.Error(w, "Post not found", http.StatusNotFound)
+			return
+		}
+
+		if ownerID != userID {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 	}
 
-	if ownerID != userID {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	// Gönderiye ait fotoğraf dosya yolunu al
+	var photoPath string
+	err = db.QueryRow("SELECT image FROM posts WHERE id = ?", postID).Scan(&photoPath)
+	if err != nil {
+
+		http.Error(w, "Could not retrieve photo path", http.StatusInternalServerError)
+
 		return
 	}
 
@@ -74,6 +98,15 @@ func HandleDeletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fotoğrafı sil
+	if photoPath != "" {
+		err = os.Remove(filepath.Join("./Back-end/", photoPath))
+		if err != nil {
+			http.Error(w, "Could not delete photo", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// Başarılı bir şekilde silindiğini belirt
-	w.Write([]byte("Post and its comments deleted successfully"))
+	w.Write([]byte("Post, its comments, and associated photo deleted successfully"))
 }
