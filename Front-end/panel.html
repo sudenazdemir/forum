@@ -103,9 +103,10 @@
         <p>Email: {{.Email}}</p>
         <p>Rol: {{.Role}}</p>
         <!-- Kullanıcı silme formu -->
-        <form action="/admin" method="post">
-            <input type="hidden" name="username" value="{{.Username}}">
-            <button type="submit">Kullanıcıyı Sil</button>
+        <form method="post">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <button type="submit">Delete User</button>
         </form>
     </div>
     {{ end }}
