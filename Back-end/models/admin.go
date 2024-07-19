@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// HandleAdmin handles admin panel requests including role assignments
 func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
 	if err != nil {
@@ -15,12 +16,14 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
+
 	tmpl, ok := tmplCache["panel"]
 	if !ok {
 		http.Error(w, "Could not load panel template", http.StatusInternalServerError)
 		return
 	}
 
+	// Fetch posts and users
 	posts, err := handlers.FetchPosts(db)
 	if err != nil {
 		http.Error(w, "Could not retrieve posts", http.StatusInternalServerError)
@@ -33,61 +36,101 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Kullanıcı giriş yapmış mı diye kontrol edelim
+	// Check if user is logged in
 	_, err = r.Cookie("user_id")
 	loggedIn := err == nil
 	data := map[string]interface{}{
 		"LoggedIn": loggedIn,
 		"Posts":    posts,
-		"Users":    users, // Kullanıcı verilerini data'ya ekliyoruz
+		"Users":    users,
 	}
 
 	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		if err := deletetable(db, username); err != nil {
-			http.Error(w, "Failed to delete user: "+err.Error(), http.StatusInternalServerError)
-			log.Println("Failed to delete user:", err)
-			return
+		action := r.FormValue("action")
+		switch action {
+		case "delete_user":
+			username := r.FormValue("username")
+			if err := deleteUser(db, username); err != nil {
+				http.Error(w, "Failed to delete user: "+err.Error(), http.StatusInternalServerError)
+				log.Println("Failed to delete user:", err)
+				return
+			}
+			fmt.Fprintf(w, "Username %s deleted successfully", username)
+
+		case "assign_role":
+			userID := r.FormValue("user_id")
+			if err := assignRoleToUser(db, userID); err != nil {
+				http.Error(w, "Failed to assign moderator role: "+err.Error(), http.StatusInternalServerError)
+				log.Println("Failed to assign moderator role:", err)
+				return
+			}
+			fmt.Fprintf(w, "User ID %s has been assigned moderator role", userID)
 		}
 
-		fmt.Fprintf(w, "Username %s deleted successfully", username)
-	} else {
-		if err := tmpl.Execute(w, data); err != nil {
-			http.Error(w, "Could not execute template", http.StatusInternalServerError)
-			return
-		}
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Could not execute template", http.StatusInternalServerError)
+		return
 	}
 }
 
-func deletetable(database *sql.DB, username string) error {
-	// Transaction başlat
-	tx, err := database.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+func HandleAssignRole(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		userID := r.FormValue("user_id")
 
-	// Kullanıcıyı sil
-	deleteStmt := "DELETE FROM users WHERE username = ?;"
-	if _, err := tx.Exec(deleteStmt, username); err != nil {
-		return err
-	}
-
-	// Tabloda kalan satır sayısını kontrol et
-	rowCount := 0
-	countStmt := "SELECT COUNT(*) FROM users;"
-	if err := tx.QueryRow(countStmt).Scan(&rowCount); err != nil {
-		return err
-	}
-
-	// Eğer tablo boş ise, otomatik artan değeri sıfırla
-	if rowCount == 0 {
-		resetAIStmt := "DELETE FROM SQLITE_SEQUENCE WHERE NAME = 'users';"
-		if _, err := tx.Exec(resetAIStmt); err != nil {
-			return err
+		db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
+		if err != nil {
+			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+			return
 		}
-	}
+		defer db.Close()
 
-	// Transaction'ı commit et
-	return tx.Commit()
+		err = assignRoleToUser(db, userID)
+		if err != nil {
+			http.Error(w, "Failed to assign role: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	} else {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	}
+}
+
+func assignRoleToUser(db *sql.DB, userID string) error {
+	// Kullanıcı rolünü moderatör olarak güncelleme işlemini buraya ekleyin
+	_, err := db.Exec("UPDATE users SET role = 'moderator' WHERE id = ?", userID)
+	return err
+}
+
+func HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		username := r.FormValue("username")
+
+		db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
+		if err != nil {
+			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		err = deleteUser(db, username)
+		if err != nil {
+			http.Error(w, "Failed to delete user: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	} else {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	}
+}
+
+func deleteUser(db *sql.DB, username string) error {
+	// Kullanıcıyı silme işlemini buraya ekleyin
+	_, err := db.Exec("DELETE FROM users WHERE username = ?", username)
+	return err
 }

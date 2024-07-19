@@ -72,6 +72,9 @@ func main() {
 	http.HandleFunc("/delete_post", models.HandleDeletePost)
 	http.HandleFunc("/delete_comment", models.HandleDeleteComment)
 
+	// New handlers for user management
+	http.HandleFunc("/delete_user", models.HandleDeleteUser)
+	http.HandleFunc("/assign_role", models.HandleAssignRole)
 	// OAuth Handlers
 	http.HandleFunc("/auth/github/login", models.HandleGitHubLogin)
 	http.HandleFunc("/auth/github/callback", models.HandleGitHubCallback)
