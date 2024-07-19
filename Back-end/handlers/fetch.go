@@ -89,3 +89,133 @@ func FetchComments(db *sql.DB, postID int) ([]Comment, error) {
 
 	return comments, nil
 }
+
+// FetchCategories, veri tabanından kategorileri çeker ve bir slice döner.
+func FetchCategories(db *sql.DB) ([]Category, error) {
+	// Kategorileri çekmek için sorgu
+	rows, err := db.Query("SELECT id, name, link FROM categories")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []Category
+	for rows.Next() {
+		var category Category
+		err := rows.Scan(&category.ID, &category.Name, &category.Link)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}
+func FetchUserPosts(db *sql.DB, userID int64) ([]Post, error) {
+	rows, err := db.Query("SELECT id, user_id, title, content, image, category_id, created_at, total_likes, total_dislikes FROM posts WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Image, &post.Category, &post.CreatedAt, &post.Likes, &post.Dislikes)
+		if err != nil {
+			return nil, err
+		}
+		err = db.QueryRow("SELECT name FROM categories WHERE id = ?", post.Category).Scan(&post.CategoryName)
+		if err != nil {
+			return nil, err
+		}
+		if post.Image != "" {
+			post.Image = "/" + post.Image
+		}
+		posts = append(posts, post)
+	}
+	return posts, rows.Err()
+}
+func FetchLikedPosts(db *sql.DB, userID int64) ([]Post, error) {
+	rows, err := db.Query(`
+		SELECT p.id, p.user_id, p.title, p.content, p.image, p.category_id, p.created_at, p.total_likes, p.total_dislikes
+		FROM posts p
+		INNER JOIN likes l ON p.id = l.post_id
+		WHERE l.user_id = ? AND l.like_type = 'like'`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var likedPosts []Post
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Image, &post.Category, &post.CreatedAt, &post.Likes, &post.Dislikes)
+		if err != nil {
+			return nil, err
+		}
+		err = db.QueryRow("SELECT name FROM categories WHERE id = ?", post.Category).Scan(&post.CategoryName)
+		if err != nil {
+			return nil, err
+		}
+		if post.Image != "" {
+			post.Image = "/" + post.Image
+		}
+		likedPosts = append(likedPosts, post)
+	}
+	return likedPosts, rows.Err()
+}
+func FetchDislikedPosts(db *sql.DB, userID int64) ([]Post, error) {
+	rows, err := db.Query(`
+		SELECT p.id, p.user_id, p.title, p.content, p.image, p.category_id, p.created_at, p.total_likes, p.total_dislikes
+		FROM posts p
+		INNER JOIN likes l ON p.id = l.post_id
+		WHERE l.user_id = ? AND l.like_type = 'dislike'`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dislikedPosts []Post
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.Image, &post.Category, &post.CreatedAt, &post.Likes, &post.Dislikes)
+		if err != nil {
+			return nil, err
+		}
+		err = db.QueryRow("SELECT name FROM categories WHERE id = ?", post.Category).Scan(&post.CategoryName)
+		if err != nil {
+			return nil, err
+		}
+		if post.Image != "" {
+			post.Image = "/" + post.Image
+		}
+		dislikedPosts = append(dislikedPosts, post)
+	}
+	return dislikedPosts, rows.Err()
+}
+func FetchUserComments(db *sql.DB, userID int64) ([]Comment, error) {
+	rows, err := db.Query(`
+		SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username
+		FROM comments c
+		INNER JOIN users u ON c.user_id = u.id
+		WHERE c.user_id = ?`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []Comment
+	for rows.Next() {
+		var comment Comment
+		err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt, &comment.Username)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
+	}
+	return comments, rows.Err()
+}
