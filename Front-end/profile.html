@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="utf-8" />
     <title>Profil Sayfası</title>
     <link rel="stylesheet" href="styles/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
     <header>
         <div class="pages">
             <img class="logo_image" src="/docs/WG.png" alt="logo">
             <nav>
-                <a class="page_label" href="/">Ana Sayfa</a>
+                <a class="page_label" href="/"><i class="fa-solid fa-house"></i>  Ana Sayfa</a>
                 <a class="page_label" href="/create_post">Gönderi Oluştur</a>
-                <a class="page_label" href="/profile">Profil</a>
+                <a class="page_label" href="/profile"><i class="fa-solid fa-user"></i> Profil</a>
                 <form action="/logout" method="post" class="logout_form">
                     <button type="submit">Çıkış Yap</button>
                 </form>
             </nav>
         </div>
     </header>
-    
+
     <div class="prof_container">
         <div class="prof_image_container">
             <div class="image_frame">
-                <img class="prof_image" src="https://st5.depositphotos.com/1915171/63123/v/450/depositphotos_631235886-stock-illustration-user-profile-icon-vector-avatar.jpg" alt="Profil Resmi">
+                <img class="prof_image"
+                    src="https://st5.depositphotos.com/1915171/63123/v/450/depositphotos_631235886-stock-illustration-user-profile-icon-vector-avatar.jpg"
+                    alt="Profil Resmi">
             </div>
         </div>
-        
-        <div class="profil_details">  
+
+        <div class="profil_details">
             <p><strong>Kullanıcı Adı:</strong> <span id="username">{{.Username}}</span></p>
             <p><strong>Email:</strong> <span id="email">{{.Email}}</span></p>
             <p><strong>Role:</strong> <span id="email">{{.Role}}</span></p>
@@ -35,12 +42,12 @@
         </div>
         {{ if eq .Role "admin" }}
         <a class="admin_link" href="panel">Admin Paneli Giriş</a>
-    {{ end }}
-    {{ if eq .Role "moderator" }}
-    <a class="admin_link" href="panel">Moedaratör Paneli Giriş</a>
-{{ end }}
+        {{ end }}
+        {{ if eq .Role "moderator" }}
+        <a class="admin_link" href="panel">Moedaratör Paneli Giriş</a>
+        {{ end }}
     </div>
-    
+
     <div class="tabs">
         <button class="tablinks" onclick="openTab(event, 'posts')">Gönderiler</button>
         <button class="tablinks" onclick="openTab(event, 'likes')">Etkileşimde Bulunulan Gönderiler</button>
@@ -56,7 +63,7 @@
                 <h1>{{.CategoryName}}</h1>
                 <h2>{{.Title}}</h2>
                 <p><strong>Gönderi:</strong> {{.Content}}</p>
-                
+
                 {{ if .Image }}
                 <img src="{{.Image}}" alt="Post Image">
                 {{ end }}
@@ -81,14 +88,14 @@
                 <h1>{{.CategoryName}}</h1>
                 <h2>{{.Title}}</h2>
                 <p><strong>Gönderi:</strong> {{.Content}}</p>
-                
+
                 {{ if .Image }}
                 <img src="{{.Image}}" alt="Post Image">
                 {{ end }}
                 <p><strong>Beğeniler:</strong> {{.Likes}}</p>
                 <p><strong>Beğenmeme:</strong> {{.Dislikes}}</p>
                 <p><strong>Oluşturulma Tarihi:</strong> {{.CreatedAt}}</p>
-                
+
             </div>
             {{ end }}
         </div>
@@ -100,7 +107,7 @@
                 <h1>{{.CategoryName}}</h1>
                 <h2>{{.Title}}</h2>
                 <p><strong>Gönderi:</strong> {{.Content}}</p>
-                
+
                 {{ if .Image }}
                 <img src="{{.Image}}" alt="Post Image">
                 {{ end }}
@@ -144,22 +151,23 @@
         document.getElementsByClassName('tablinks')[0].click();  // İlk sekmenin açık olarak başlaması
 
         function deletePost(form) {
-        if (confirm("Bu gönderiyi silmek istediğinizden emin misiniz?")) {
-            fetch(form.action, {
-                method: 'POST',
-            }).then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert("Gönderi silinemedi.");
-                }
-            }).catch(error => {
-                console.error('Error deleting post:', error);
-                alert("Bir hata oluştu. Gönderi silinemedi.");
-            });
+            if (confirm("Bu gönderiyi silmek istediğinizden emin misiniz?")) {
+                fetch(form.action, {
+                    method: 'POST',
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert("Gönderi silinemedi.");
+                    }
+                }).catch(error => {
+                    console.error('Error deleting post:', error);
+                    alert("Bir hata oluştu. Gönderi silinemedi.");
+                });
+            }
+            return false; // Formun default davranışını engelle (sayfayı yenileme)
         }
-        return false; // Formun default davranışını engelle (sayfayı yenileme)
-    }
     </script>
 </body>
+
 </html>

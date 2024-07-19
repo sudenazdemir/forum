@@ -20,6 +20,7 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not load panel template", http.StatusInternalServerError)
 		return
 	}
+
 	// Gönderileri çekmek için sorgu
 	rows1, err := db.Query(`
 		SELECT 
@@ -79,9 +80,33 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 
 		posts = append(posts, post)
 	}
-	data := map[string]interface{}{
 
-		"Posts": posts,
+	// Kullanıcıları çekmek için sorgu
+	rows3, err := db.Query(`SELECT id, username, email, role FROM users`)
+	if err != nil {
+		http.Error(w, "Could not retrieve users", http.StatusInternalServerError)
+		return
+	}
+	defer rows3.Close()
+
+	var users []handlers.User
+	for rows3.Next() {
+		var user handlers.User
+		err := rows3.Scan(&user.ID, &user.Username, &user.Email, &user.Role)
+		if err != nil {
+			http.Error(w, "Could not scan user", http.StatusInternalServerError)
+			return
+		}
+		users = append(users, user)
+	}
+
+	// Kullanıcı giriş yapmış mı diye kontrol edelim
+	_, err = r.Cookie("user_id")
+	loggedIn := err == nil
+	data := map[string]interface{}{
+		"LoggedIn": loggedIn,
+		"Posts":    posts,
+		"Users":    users, // Kullanıcı verilerini data'ya ekliyoruz
 	}
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
@@ -94,7 +119,6 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, "Username %s deleted successfully", username)
 	} else {
-
 		if err := tmpl.Execute(w, data); err != nil {
 			http.Error(w, "Could not execute template", http.StatusInternalServerError)
 			return

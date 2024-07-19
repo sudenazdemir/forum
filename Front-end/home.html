@@ -1,19 +1,24 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="utf-8" />
     <title>Ana Sayfa</title>
     <link rel="stylesheet" href="../styles/home.css">
     <link href="https://fonts.cdnfonts.com/css/montreal?styles=28831" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
     <header>
         <div class="pages">
             <img class="logo_image" src="../docs/WG.png" alt="logo">
-            <a class="page_label" href="/">Walk Global</a>
+            <a class="page_label" href="/"><i class="fa-solid fa-house"></i>  Ana Sayfa</a>
             <a class="page_label" href="/create_post">Gönderi Oluştur</a>
-            <a class="page_label" href="/profile">Profil</a>
+            <a class="page_label" href="/profile"><i class="fa-solid fa-user"></i> Profil</a>
             {{if .ShowLoginRegister}}
             <a class="page_label" href="/login">Login</a>
             <a class="page_label" href="/register">Register</a>
@@ -33,51 +38,57 @@
                 <p><strong>Gönderi:</strong> {{.Content}}</p>
                 <p><strong>Oluşturan Hesap:</strong> {{.Username}}</p>
                 {{ if .Image }}
-                    <img src="{{.Image}}" alt="Post Image">
+                <img src="{{.Image}}" alt="Post Image">
                 {{ end }}
-                <p><strong>Beğeniler:</strong> {{.Likes}}</p>
-                <p><strong>Beğenmeme:</strong> {{.Dislikes}}</p>
-                <p><strong>Oluşturulma Tarihi:</strong> {{.CreatedAt}}</p>
 
-                <div class="comments-container">
-                    <p>YORUMLAR:{{len .Comments}}</p>
-                    <button class="toggle-comments">Göster/Gizle</button>
-                    <div class="comments" style="display: none;"> 
-                        {{ range .Comments }}
-                            <div class="comment" data-comment-id="{{.ID}}">
-                                <p><em>Kullanıcı : {{ .Username }}</em></p>
-                                <p>Yorum : {{ .Content }}</p>
-                                <p>Oluşturma Tarihi : {{ .CreatedAt }}</p>
-                                <p><strong>Beğeniler:</strong> {{.Likes}}</p>
-                                <p><strong>Beğenmeme:</strong> {{.Dislikes}}</p>
-                                {{ if $.LoggedIn }}
-                                <div class="comment-like-dislike-buttons">
-                                    <form method="post" action="/like_comment" style="display:inline;">
-                                        <input type="hidden" name="commentId" value="{{.ID}}">
-                                        <button type="submit" class="like-button"><i class="fas fa-thumbs-up"></i></button>
-                                    </form>
-                                    <form method="post" action="/dislike_comment" style="display:inline;">
-                                        <input type="hidden" name="commentId" value="{{.ID}}">
-                                        <button type="submit" class="dislike-button"><i class="fas fa-thumbs-down"></i></button>
-                                    </form>
-                                </div>
-                                {{end}}
-                            </div>
-                        {{ end }}
-                    </div>
-                </div>
-                <br>
+                <p><strong>Oluşturulma Tarihi:</strong> {{.CreatedAt}}</p>
                 {{ if $.LoggedIn }}
                 <div class="like-dislike-buttons">
                     <form method="post" action="/like" style="display:inline;">
                         <input type="hidden" name="postId" value="{{.ID}}">
                         <button type="submit" class="like-button"><i class="fas fa-thumbs-up"></i></button>
+                        <span class="like-count">{{.Likes}}</span>
                     </form>
                     <form method="post" action="/dislike" style="display:inline;">
                         <input type="hidden" name="postId" value="{{.ID}}">
                         <button type="submit" class="dislike-button"><i class="fas fa-thumbs-down"></i></button>
+                        <span class="dislike-count">{{.Dislikes}}</span>
                     </form>
                 </div>
+                {{end}}
+                <div class="comments-container">
+                    <p>YORUMLAR:{{len .Comments}}</p>
+                    <button class="toggle-comments">Göster/Gizle</button>
+                    <div class="comments" style="display: none;">
+                        {{ range .Comments }}
+                        <div class="comment" data-comment-id="{{.ID}}">
+                            <p><em>Kullanıcı : {{ .Username }}</em></p>
+                            <p>Yorum : {{ .Content }}</p>
+                            <p>Oluşturma Tarihi : {{ .CreatedAt }}</p>
+
+                            {{ if $.LoggedIn }}
+
+                            <div class="comment-like-dislike-buttons">
+                                <form method="post" action="/like_comment" style="display:inline;">
+                                    <input type="hidden" name="commentId" value="{{.ID}}">
+                                    <button type="submit" class="like-button"><i class="fas fa-thumbs-up"></i></button>
+                                    <span class="like-count">{{.Likes}}</span>
+                                </form>
+                                <form method="post" action="/dislike_comment" style="display:inline;">
+                                    <input type="hidden" name="commentId" value="{{.ID}}">
+                                    <button type="submit" class="dislike-button"><i
+                                            class="fas fa-thumbs-down"></i></button>
+                                    <span class="dislike-count">{{.Dislikes}}</span>
+                                </form>
+                            </div>
+                            {{end}}
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+                <br>
+                {{ if $.LoggedIn }}
+
                 <form class="comment_form" method="post" data-post-id="{{.ID}}">
                     <input type="hidden" name="postId" value="{{.ID}}">
                     <textarea name="comment" placeholder="Yorumunuzu buraya girin..." required></textarea>
@@ -88,7 +99,7 @@
                 {{ end }}
                 <br>
             </div>
-            {{ end }}  
+            {{ end }}
         </div>
         <div class="categories">
             <h1>Kategoriler</h1>
@@ -130,33 +141,33 @@
                         method: "POST",
                         body: formData
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.message === "Comment posted successfully") {
-                            const commentsContainer = this.parentElement.querySelector(".comments");
-                            const newComment = document.createElement("div");
-                            newComment.classList.add("comment");
-                            newComment.innerHTML = `
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.message === "Comment posted successfully") {
+                                const commentsContainer = this.parentElement.querySelector(".comments");
+                                const newComment = document.createElement("div");
+                                newComment.classList.add("comment");
+                                newComment.innerHTML = `
                                 <p><em>YourUsername</em></p>
                                 <p>${formData.get("comment")}</p>
                                 <p>Just now</p>`;
-                            commentsContainer.appendChild(newComment);
-                            this.reset();
-                        } else {
-                            alert("Failed to post comment");
-                        }
-                    })
-                    .catch(error => console.error("Error:", error));
+                                commentsContainer.appendChild(newComment);
+                                this.reset();
+                            } else {
+                                alert("Failed to post comment");
+                            }
+                        })
+                        .catch(error => console.error("Error:", error));
                 });
 
                 // Prevent propagation from textarea click
                 form.querySelector("textarea").addEventListener("click", function (e) {
                     e.stopPropagation(); // Stop event from propagating to .posts
                 });
-                
+
             });
             document.querySelectorAll('.category').forEach(category => {
-                category.addEventListener('click', function(event) {
+                category.addEventListener('click', function (event) {
                     event.preventDefault(); // Bağlantıya tıklamayı önler
 
                     const categoryName = this.textContent.slice(1); // Kategori adını al, # işaretini kaldır
@@ -173,4 +184,5 @@
         });
     </script>
 </body>
+
 </html>

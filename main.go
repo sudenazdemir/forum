@@ -58,7 +58,7 @@ func main() {
 	http.HandleFunc("/logout", models.HandleLogout)
 	http.HandleFunc("/submit_post", models.HandleSubmitPost)
 	http.HandleFunc("/create_post", models.HandleCreatePost)
-	http.HandleFunc("/category", models.HandleCategory)
+
 	http.HandleFunc("/like", models.LikePost)
 	http.HandleFunc("/like_comment", func(w http.ResponseWriter, r *http.Request) {
 		models.HandleLikeComment(w, r)
