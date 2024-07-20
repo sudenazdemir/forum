@@ -74,6 +74,12 @@
                                     <span class="dislike-count">{{.Dislikes}}</span>
                                 </form>
                             </div>
+                            <div class="comment-actions">
+                                <form method="post" action="/delete_comment">
+                                    <input type="hidden" name="comment_id" value="{{.ID}}">
+                                    <button type="submit" class="delete-comment-button">Yorumu Sil</button>
+                                </form>
+                            </div>
                             {{end}}
                         </div>
                         {{ end }}
