@@ -35,18 +35,26 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not retrieve users", http.StatusInternalServerError)
 		return
 	}
+	modRequests, err := handlers.FetchModRequests(db)
+	if err != nil {
+		http.Error(w, "Could not retrieve moderator requests", http.StatusInternalServerError)
+		return
+	}
 
 	// Check if user is logged in
 	_, err = r.Cookie("user_id")
 	loggedIn := err == nil
 	data := map[string]interface{}{
-		"LoggedIn": loggedIn,
-		"Posts":    posts,
-		"Users":    users,
+		"LoggedIn":    loggedIn,
+		"Posts":       posts,
+		"Users":       users,
+		"ModRequests": modRequests,
 	}
 
 	if r.Method == http.MethodPost {
 		action := r.FormValue("action")
+		userID := r.FormValue("user_id")
+		log.Printf("Action: %s, Username: %s\n", action, userID)
 		switch action {
 		case "delete_user":
 			username := r.FormValue("username")
@@ -58,16 +66,34 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Username %s deleted successfully", username)
 
 		case "assign_role":
-			userID := r.FormValue("user_id")
 			if err := assignRoleToUser(db, userID); err != nil {
 				http.Error(w, "Failed to assign moderator role: "+err.Error(), http.StatusInternalServerError)
 				log.Println("Failed to assign moderator role:", err)
 				return
 			}
 			fmt.Fprintf(w, "User ID %s has been assigned moderator role", userID)
+
+		case "approve_mod":
+			if err := approveModRequest(db, userID); err != nil {
+				http.Error(w, "Failed to approve moderator request: "+err.Error(), http.StatusInternalServerError)
+				log.Println("Failed to approve moderator request:", err)
+				return
+			}
+
+		case "reject_mod":
+			if err := rejectModRequest(db, userID); err != nil {
+				http.Error(w, "Failed to reject moderator request: "+err.Error(), http.StatusInternalServerError)
+				log.Println("Failed to reject moderator request:", err)
+				return
+			}
+		default:
+			http.Error(w, "Invalid action", http.StatusBadRequest)
+			log.Println("Invalid action:", action) // Log the invalid action
+			return
+
 		}
 
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		http.Redirect(w, r, "/panel", http.StatusSeeOther)
 		return
 	}
 
@@ -94,7 +120,7 @@ func HandleAssignRole(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		http.Redirect(w, r, "/panel	", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
@@ -123,7 +149,7 @@ func HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		http.Redirect(w, r, "/panel", http.StatusSeeOther)
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
@@ -133,4 +159,27 @@ func deleteUser(db *sql.DB, username string) error {
 	// Kullanıcıyı silme işlemini buraya ekleyin
 	_, err := db.Exec("DELETE FROM users WHERE username = ?", username)
 	return err
+}
+
+func approveModRequest(db *sql.DB, userID string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec("UPDATE users SET role = 'moderator' WHERE id = ?", userID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if _, err := tx.Exec("UPDATE mod_requests SET status = 'approved' WHERE user_id = ?", userID); err != nil {
+		tx.Rollback()
+		return err
+
+	}
+	return tx.Commit()
+}
+func rejectModRequest(db *sql.DB, UserID string) error {
+
+	_, err := db.Exec("UPDATE mod_requests SET status = 'rejected' WHERE user_id = ?", UserID)
+	return err
+
 }

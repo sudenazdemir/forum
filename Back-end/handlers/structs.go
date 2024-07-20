@@ -54,3 +54,8 @@ type Likes struct {
 	UserID   int
 	LikeType string
 }
+type ModRequest struct {
+	ID     int
+	UserID int
+	Status string
+}

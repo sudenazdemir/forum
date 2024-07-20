@@ -33,6 +33,7 @@ func main() {
 	handlers.CreateCommentsTable(database)
 	handlers.CreateProfileTable(database)
 	handlers.CreateCommentLikesTable(database)
+	handlers.CreateModRequestsTable(database)
 
 	models.LoadTemplates()
 	log.Println("Tables created successfully!")
@@ -54,7 +55,7 @@ func main() {
 	http.HandleFunc("/register", models.HandleRegister)
 	http.HandleFunc("/registerSubmit", models.HandleRegisterPost)
 	http.HandleFunc("/profile", models.HandleProfile)
-	http.HandleFunc("/panel", (models.HandleAdmin))
+	http.HandleFunc("/panel", models.HandleAdmin)
 	http.HandleFunc("/logout", models.HandleLogout)
 	http.HandleFunc("/submit_post", models.HandleSubmitPost)
 	http.HandleFunc("/create_post", models.HandleCreatePost)
@@ -75,6 +76,7 @@ func main() {
 	// New handlers for user management
 	http.HandleFunc("/delete_user", models.HandleDeleteUser)
 	http.HandleFunc("/assign_role", models.HandleAssignRole)
+	http.HandleFunc("/request_mod", models.HandleModRequest)
 	// OAuth Handlers
 	http.HandleFunc("/auth/github/login", models.HandleGitHubLogin)
 	http.HandleFunc("/auth/github/callback", models.HandleGitHubCallback)

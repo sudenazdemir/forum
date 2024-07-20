@@ -78,3 +78,28 @@ func HandleProfile(w http.ResponseWriter, r *http.Request) {
 		"Comments":      comments,
 	})
 }
+func HandleModRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "ınvalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+	//Kullanıcı kimliği için cookie
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		http.Error(w, "User not logged in ", http.StatusUnauthorized)
+		return
+	}
+	userID := cookie.Value
+	db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+	_, err = db.Exec("INSERT INTO mod_requests (user_id, status) VALUES (?, 'pending')", userID)
+	if err != nil {
+		http.Error(w, "Failed to create mod request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/profile", http.StatusSeeOther)
+}

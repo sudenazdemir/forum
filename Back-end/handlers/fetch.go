@@ -1,6 +1,8 @@
 package handlers
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 // Function to fetch users
 func FetchUsers(db *sql.DB) ([]User, error) {
@@ -218,4 +220,22 @@ func FetchUserComments(db *sql.DB, userID int64) ([]Comment, error) {
 		comments = append(comments, comment)
 	}
 	return comments, rows.Err()
+}
+
+func FetchModRequests(db *sql.DB) ([]ModRequest, error) {
+	rows, err := db.Query("SELECT id, user_id, status FROM mod_requests WHERE status = 'pending'")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var modRequests []ModRequest
+	for rows.Next() {
+		var modRequest ModRequest
+		err := rows.Scan(&modRequest.ID, &modRequest.UserID, &modRequest.Status)
+		if err != nil {
+			return nil, err
+		}
+		modRequests = append(modRequests, modRequest)
+	}
+	return modRequests, nil
 }

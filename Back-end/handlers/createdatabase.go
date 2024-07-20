@@ -126,3 +126,16 @@ func CreateLikesTable(database *sql.DB) {
 		log.Fatalf("Likes table creation failed: %s", err)
 	}
 }
+func CreateModRequestsTable(database *sql.DB) {
+	createModRequestsTable := `
+	CREATE TABLE IF NOT EXISTS mod_requests (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		status TEXT NOT NULL DEFAULT 'pending'
+	);
+	`
+	_, err := database.Exec(createModRequestsTable)
+	if err != nil {
+		log.Fatalf("Mod Requests table creation failed: %s", err)
+	}
+}

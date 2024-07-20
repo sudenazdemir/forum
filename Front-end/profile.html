@@ -46,6 +46,11 @@
         {{ if eq .Role "moderator" }}
         <a class="admin_link" href="panel">Moedaratör Paneli Giriş</a>
         {{ end }}
+        {{ if eq .Role "user" }}
+        <form action="/request_mod" method="POST">
+            <button type="submit">Moedaratör Ol</button>
+        </form>
+        {{ end }}
     </div>
 
     <div class="tabs">

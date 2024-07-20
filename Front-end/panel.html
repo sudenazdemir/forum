@@ -97,6 +97,22 @@
             {{ end }}
         </div>
 
+        <div class="modrequests">
+            <h2>Moderatör İstekleri</h2>
+            {{range .ModRequests}}
+            <div>
+                <p>USER ID: {{.UserID}}</p>
+                <form action="/panel" method="post">
+                    <input type="hidden" name="user_id" value="{{.UserID}}">
+                    <button type="submit" name="action" value="approve_mod">Kabul Et</button>
+                    <button type="submit" name="action" value="reject_mod">Reddet</button>
+                </form>
+            </div>
+            {{end}}
+        </div>
+        
+
+
         <div class="assign-role">
             <h2>Moderatör Rolü Ata</h2>
             <form method="post" action="/assign_role">
