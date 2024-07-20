@@ -28,6 +28,7 @@ type Post struct {
 	Likes        int
 	Dislikes     int
 	Comments     []Comment // Yorumları ekleyin
+	Reason       string
 }
 type Profile struct {
 	ID             int

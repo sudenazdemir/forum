@@ -160,12 +160,12 @@ func HandleDeleteComment(w http.ResponseWriter, r *http.Request) {
 func getCommentID(r *http.Request) (int, error) {
 	commentIDParam := r.FormValue("comment_id")
 	if commentIDParam == "" {
-		return 0, fmt.Errorf("Comment ID is required")
+		return 0, fmt.Errorf("comment ID is required")
 	}
 
 	commentID, err := strconv.Atoi(commentIDParam)
 	if err != nil {
-		return 0, fmt.Errorf("Invalid comment ID")
+		return 0, fmt.Errorf("invalid comment ID")
 	}
 	return commentID, nil
 }
@@ -173,18 +173,18 @@ func getCommentID(r *http.Request) (int, error) {
 func getUserIDAndRole(db *sql.DB, r *http.Request) (int, string, error) {
 	cookie, err := r.Cookie("user_id")
 	if err != nil {
-		return 0, "", fmt.Errorf("User not logged in")
+		return 0, "", fmt.Errorf("user not logged in")
 	}
 
 	userID, err := strconv.Atoi(cookie.Value)
 	if err != nil {
-		return 0, "", fmt.Errorf("Invalid user ID")
+		return 0, "", fmt.Errorf("invalid user ID")
 	}
 
 	var role string
 	err = db.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 	if err != nil {
-		return 0, "", fmt.Errorf("Failed to get user role")
+		return 0, "", fmt.Errorf("failed to get user role")
 	}
 
 	return userID, role, nil

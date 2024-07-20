@@ -73,11 +73,17 @@ func main() {
 	http.HandleFunc("/view_post", models.HandleViewPost)
 	http.HandleFunc("/delete_post", models.HandleDeletePost)
 	http.HandleFunc("/delete_comment", models.HandleDeleteComment)
+	http.HandleFunc("/report", models.HandlePostReport)
 
 	// New handlers for user management
 	http.HandleFunc("/delete_user", models.HandleDeleteUser)
 	http.HandleFunc("/assign_role", models.HandleAssignRole)
+	http.HandleFunc("/unassign_role", models.HandleUnAssignRole)
 	http.HandleFunc("/request_mod", models.HandleModRequest)
+	http.HandleFunc("/ignore_reported_post", models.HandleIgnorePostReport)
+	http.HandleFunc("/admin/add_category", models.HandleAddCategory)
+	http.HandleFunc("/admin/delete_category", models.HandleDeleteCategory)
+
 	// OAuth Handlers
 	http.HandleFunc("/auth/github/login", models.HandleGitHubLogin)
 	http.HandleFunc("/auth/github/callback", models.HandleGitHubCallback)

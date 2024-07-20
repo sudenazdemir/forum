@@ -89,6 +89,11 @@
                 <div class="alert">Beğeni ya da yorum için <a href="/login">giriş yapın</a></div>
                 {{ end }}
                 <br>
+                <form action="/report" method="post">
+                    <input type="hidden" name="post_id" value="{{.ID}}">
+                    <textarea name="reason" placeholder="Raporlama sebebini girin"></textarea>
+                    <button type="submit">Raporla</button>
+                </form>
                 <form action="/delete_post?id={{ .ID }}" method="post" onsubmit="return deletePost(this)">
                     <button type="submit">Gönderiyi Sil</button>
                 </form>

@@ -126,7 +126,9 @@
                 <label for="user_id">Kullanıcı Seçin:</label>
                 <select id="user_id" name="user_id" required>
                     {{ range .Users }}
+                    {{ if eq .Role "user" }}
                     <option value="{{ .ID }}">{{ .Username }}</option>
+                    {{ end }}
                     {{ end }}
                 </select>
                 <button type="submit">Moderatör Rolü Ata</button>
@@ -141,6 +143,59 @@
                 <button type="submit">Kullanıcıyı Sil</button>
             </form>
         </div>
+
+        <div class="reported-posts">
+            <h2>Raporlanan Gönderiler</h2>
+            {{range .ReportedPosts}}
+            <div>
+                <p>Gönderi ID: {{.ID}}</p>
+                <p>Başlık: {{.Title}}</p>
+                <p>Oluşturan: {{.Username}}</p>
+                <p>Raporlama Sebebi: {{.Reason}}</p>
+                <form action="/delete_post?id={{ .ID }}" method="post" onsubmit="return deletePost(this)">
+                    <button type="submit"> Raporlanan Gönderiyi Sil</button>
+                </form>
+                <form method="post" action="/ignore_reported_post">
+                    <input type="hidden" name="post_id" value="{{.ID}}">
+                    <button type="submit" name="action" value="ignore">Yoksay</button>
+                </form>
+            </div>
+            {{end}}
+        </div>
+
+        <div class="unassign-role">
+            <h2>Moderatör Rolünü geri alma</h2>
+            <form method="post" action="/unassign_role">
+                <label for="user_id">Kullanıcı Seçin:</label>
+                <select id="user_id" name="user_id" required>
+                    {{ range .Users }}
+                    {{ if eq .Role "moderator" }}
+                    <option value="{{ .ID }}">{{ .Username }}</option>
+                    {{ end }}
+                    {{ end }}
+                </select>
+                <button type="submit">Moderatör Rolünü Geri Al</button>
+            </form>
+        </div>
+
+        <div class="manage-category"><h2>Kategori Ekle</h2>
+            <form id="addCategoryForm" method="post">
+                <input type="hidden" name="action" value="add_category">
+                <label for="category_name">Kategori Adı:</label>
+                <input type="text" id="category_name" name="category_name" required>
+                <br>
+                <label for="category_link" aria-placeholder="(örnek: /seyahat)">link: </label>
+                <textarea id="category_link" name="category_link"></textarea>
+                <button type="submit">Ekle</button>
+            </form>
+            
+            <h2>Kategori Sil</h2>
+            <form id="deleteCategoryForm" method="post">
+                <input type="hidden" name="action" value="delete_category">
+                <label for="category_name">Kategori Name:</label>
+                <input type="text" id="category_name" name="category_name" required>
+                <button type="submit">Sil</button>
+            </form></div>
     </main>
 
     <script>

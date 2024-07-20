@@ -245,3 +245,29 @@ func FetchModRequests(db *sql.DB) ([]ModRequest, error) {
 	}
 	return requests, nil
 }
+
+// FetchReportedPosts retrieves reported posts from the database
+func FetchReportedPosts(db *sql.DB) ([]Post, error) {
+	rows, err := db.Query(`
+        SELECT p.id, p.title, p.content, p.created_at, u.username, r.reason 
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        JOIN reports r ON p.id = r.post_id
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var post Post
+		var reason string
+		if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.CreatedAt, &post.Username, &reason); err != nil {
+			return nil, err
+		}
+		post.Reason = reason // Reason ekliyoruz
+		posts = append(posts, post)
+	}
+	return posts, nil
+}
