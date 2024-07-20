@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -131,56 +132,90 @@ func HandleDeleteComment(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// comment_id'yi formdan al
-	commentIDParam := r.FormValue("comment_id")
-	if commentIDParam == "" {
-		http.Error(w, "Comment ID is required", http.StatusBadRequest)
-		return
-	}
-
-	commentID, err := strconv.Atoi(commentIDParam)
+	commentID, err := getCommentID(r)
 	if err != nil {
-		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	cookie, err := r.Cookie("user_id")
+	userID, role, err := getUserIDAndRole(db, r)
 	if err != nil {
-		http.Error(w, "User not logged in", http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	userID, err := strconv.Atoi(cookie.Value)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusInternalServerError)
-		return
-	}
-
-	var postID int
-	var commentUserID int
-	err = db.QueryRow("SELECT post_id, user_id FROM comments WHERE id = ?", commentID).Scan(&postID, &commentUserID)
-	if err != nil {
-		http.Error(w, "Comment not found", http.StatusNotFound)
-		return
-	}
-
-	var postUserID int
-	err = db.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&postUserID)
-	if err != nil {
-		http.Error(w, "Post not found", http.StatusNotFound)
-		return
-	}
-
-	if userID != commentUserID && userID != postUserID {
+	if !canDeleteComment(db, commentID, userID, role) {
 		http.Error(w, "Unauthorized to delete comment", http.StatusForbidden)
 		return
 	}
 
-	_, err = db.Exec("DELETE FROM comments WHERE id = ?", commentID)
-	if err != nil {
+	if err := deleteComment(db, commentID); err != nil {
 		http.Error(w, "Failed to delete comment", http.StatusInternalServerError)
 		return
 	}
 
 	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+}
+
+func getCommentID(r *http.Request) (int, error) {
+	commentIDParam := r.FormValue("comment_id")
+	if commentIDParam == "" {
+		return 0, fmt.Errorf("Comment ID is required")
+	}
+
+	commentID, err := strconv.Atoi(commentIDParam)
+	if err != nil {
+		return 0, fmt.Errorf("Invalid comment ID")
+	}
+	return commentID, nil
+}
+
+func getUserIDAndRole(db *sql.DB, r *http.Request) (int, string, error) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		return 0, "", fmt.Errorf("User not logged in")
+	}
+
+	userID, err := strconv.Atoi(cookie.Value)
+	if err != nil {
+		return 0, "", fmt.Errorf("Invalid user ID")
+	}
+
+	var role string
+	err = db.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+	if err != nil {
+		return 0, "", fmt.Errorf("Failed to get user role")
+	}
+
+	return userID, role, nil
+}
+
+func canDeleteComment(db *sql.DB, commentID, userID int, role string) bool {
+	if role == "admin" {
+		return true
+	}
+
+	var commentUserID, postUserID int
+	err := db.QueryRow("SELECT user_id FROM comments WHERE id = ?", commentID).Scan(&commentUserID)
+	if err != nil {
+		return false
+	}
+
+	var postID int
+	err = db.QueryRow("SELECT post_id FROM comments WHERE id = ?", commentID).Scan(&postID)
+	if err != nil {
+		return false
+	}
+
+	err = db.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&postUserID)
+	if err != nil {
+		return false
+	}
+
+	return userID == commentUserID || userID == postUserID
+}
+
+func deleteComment(db *sql.DB, commentID int) error {
+	_, err := db.Exec("DELETE FROM comments WHERE id = ?", commentID)
+	return err
 }

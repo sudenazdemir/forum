@@ -135,6 +135,12 @@
                 <p><strong>Yorum:</strong> {{.Content}}</p>
                 <p><strong>Oluşturulma Tarihi:</strong> {{.CreatedAt}}</p>
                 <br>
+                <div class="comment-actions">
+                    <form method="post" action="/delete_comment">
+                        <input type="hidden" name="comment_id" value="{{.ID}}">
+                        <button type="submit" class="delete-comment-button">Yorumu Sil</button>
+                    </form>
+                </div>
             </div>
             {{ end }}
         </div>
