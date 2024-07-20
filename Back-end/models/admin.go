@@ -111,10 +111,20 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 			return
 
 		case "add_category":
-			categoryLink := r.FormValue("category_link")
+			categoryLink := r.FormValue("category_link") // Kategorinin zaten mevcut olup olmadığını kontrol et
+			exists, err := handlers.CheckCategoryExists(db, categoryName)
+			if err != nil {
+				http.Error(w, "Failed to check category existence: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if exists {
+				http.Error(w, "Category already exists", http.StatusBadRequest)
+				return
+			}
+
+			// Kategori ekle
 			if err := addCategory(db, categoryName, categoryLink); err != nil {
 				http.Error(w, "Failed to add category: "+err.Error(), http.StatusInternalServerError)
-				log.Println("Failed to add category:", err)
 				return
 			}
 			http.Redirect(w, r, "/panel", http.StatusSeeOther)
@@ -296,30 +306,6 @@ func unassignRoleToModerator(db *sql.DB, userID string) error {
 	return err
 }
 
-func HandleAddCategory(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		category_name := r.FormValue("category_name")
-		category_description := r.FormValue("category_description")
-
-		db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
-		if err != nil {
-			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer db.Close()
-
-		err = addCategory(db, category_name, category_description)
-		if err != nil {
-			http.Error(w, "Failed to add category: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/panel	", http.StatusSeeOther)
-	} else {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-	}
-}
-
 // Kategori Ekleme Fonksiyonu
 func addCategory(db *sql.DB, name string, link string) error {
 	_, err := db.Exec("INSERT INTO categories (name,  link) VALUES (?, ?)", name, link)
@@ -327,28 +313,6 @@ func addCategory(db *sql.DB, name string, link string) error {
 		return fmt.Errorf("failed to add category: %w", err)
 	}
 	return nil
-}
-func HandleDeleteCategory(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		category_name := r.FormValue("category_name")
-
-		db, err := sql.Open("sqlite3", "./Back-end/database/forum.db")
-		if err != nil {
-			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer db.Close()
-
-		err = deleteCategory(db, category_name)
-		if err != nil {
-			http.Error(w, "Failed to add category: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/panel	", http.StatusSeeOther)
-	} else {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-	}
 }
 
 // Kategori Silme Fonksiyonu

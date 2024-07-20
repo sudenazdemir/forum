@@ -81,8 +81,6 @@ func main() {
 	http.HandleFunc("/unassign_role", models.HandleUnAssignRole)
 	http.HandleFunc("/request_mod", models.HandleModRequest)
 	http.HandleFunc("/ignore_reported_post", models.HandleIgnorePostReport)
-	http.HandleFunc("/admin/add_category", models.HandleAddCategory)
-	http.HandleFunc("/admin/delete_category", models.HandleDeleteCategory)
 
 	// OAuth Handlers
 	http.HandleFunc("/auth/github/login", models.HandleGitHubLogin)

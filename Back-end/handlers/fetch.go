@@ -271,3 +271,13 @@ func FetchReportedPosts(db *sql.DB) ([]Post, error) {
 	}
 	return posts, nil
 }
+
+// CheckCategoryExists kontrolü
+func CheckCategoryExists(db *sql.DB, categoryName string) (bool, error) {
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM categories WHERE name = ?", categoryName).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
