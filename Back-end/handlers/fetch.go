@@ -223,19 +223,25 @@ func FetchUserComments(db *sql.DB, userID int64) ([]Comment, error) {
 }
 
 func FetchModRequests(db *sql.DB) ([]ModRequest, error) {
-	rows, err := db.Query("SELECT id, user_id, status FROM mod_requests WHERE status = 'pending'")
+	query := `
+		SELECT mr.id, u.id, u.username, mr.status
+		FROM mod_requests mr
+		JOIN users u ON mr.user_id = u.id
+		WHERE mr.status = 'pending'
+	`
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var modRequests []ModRequest
+
+	var requests []ModRequest
 	for rows.Next() {
-		var modRequest ModRequest
-		err := rows.Scan(&modRequest.ID, &modRequest.UserID, &modRequest.Status)
-		if err != nil {
+		var req ModRequest
+		if err := rows.Scan(&req.ID, &req.UserID, &req.Username, &req.Status); err != nil {
 			return nil, err
 		}
-		modRequests = append(modRequests, modRequest)
+		requests = append(requests, req)
 	}
-	return modRequests, nil
+	return requests, nil
 }

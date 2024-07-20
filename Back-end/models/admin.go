@@ -53,11 +53,10 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		action := r.FormValue("action")
-		userID := r.FormValue("user_id")
-		log.Printf("Action: %s, Username: %s\n", action, userID)
+		username := r.FormValue("username")
 		switch action {
 		case "delete_user":
-			username := r.FormValue("username")
+
 			if err := deleteUser(db, username); err != nil {
 				http.Error(w, "Failed to delete user: "+err.Error(), http.StatusInternalServerError)
 				log.Println("Failed to delete user:", err)
@@ -66,6 +65,7 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Username %s deleted successfully", username)
 
 		case "assign_role":
+			userID := r.FormValue("user_id")
 			if err := assignRoleToUser(db, userID); err != nil {
 				http.Error(w, "Failed to assign moderator role: "+err.Error(), http.StatusInternalServerError)
 				log.Println("Failed to assign moderator role:", err)
@@ -74,14 +74,14 @@ func HandleAdmin(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "User ID %s has been assigned moderator role", userID)
 
 		case "approve_mod":
-			if err := approveModRequest(db, userID); err != nil {
+			if err := approveModRequest(db, username); err != nil {
 				http.Error(w, "Failed to approve moderator request: "+err.Error(), http.StatusInternalServerError)
 				log.Println("Failed to approve moderator request:", err)
 				return
 			}
 
 		case "reject_mod":
-			if err := rejectModRequest(db, userID); err != nil {
+			if err := rejectModRequest(db, username); err != nil {
 				http.Error(w, "Failed to reject moderator request: "+err.Error(), http.StatusInternalServerError)
 				log.Println("Failed to reject moderator request:", err)
 				return
@@ -161,25 +161,40 @@ func deleteUser(db *sql.DB, username string) error {
 	return err
 }
 
-func approveModRequest(db *sql.DB, userID string) error {
+func approveModRequest(db *sql.DB, username string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
+
+	// Get the user ID from the username
+	var userID int
+	if err := tx.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Update the user role to 'moderator'
 	if _, err := tx.Exec("UPDATE users SET role = 'moderator' WHERE id = ?", userID); err != nil {
 		tx.Rollback()
 		return err
 	}
+
+	// Update the mod request status to 'approved'
 	if _, err := tx.Exec("UPDATE mod_requests SET status = 'approved' WHERE user_id = ?", userID); err != nil {
 		tx.Rollback()
 		return err
-
 	}
+
 	return tx.Commit()
 }
-func rejectModRequest(db *sql.DB, UserID string) error {
 
-	_, err := db.Exec("UPDATE mod_requests SET status = 'rejected' WHERE user_id = ?", UserID)
+func rejectModRequest(db *sql.DB, username string) error {
+	var userID int
+	if err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID); err != nil {
+		return err
+	}
+
+	_, err := db.Exec("UPDATE mod_requests SET status = 'rejected' WHERE user_id = ?", userID)
 	return err
-
 }

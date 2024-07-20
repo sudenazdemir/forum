@@ -101,9 +101,10 @@
             <h2>Moderatör İstekleri</h2>
             {{range .ModRequests}}
             <div>
-                <p>USER ID: {{.UserID}}</p>
+                <p>Username: {{.Username}}</p>
                 <form action="/panel" method="post">
                     <input type="hidden" name="user_id" value="{{.UserID}}">
+                    <input type="hidden" name="username" value="{{.Username}}">
                     <button type="submit" name="action" value="approve_mod">Kabul Et</button>
                     <button type="submit" name="action" value="reject_mod">Reddet</button>
                 </form>

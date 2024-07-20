@@ -55,7 +55,8 @@ type Likes struct {
 	LikeType string
 }
 type ModRequest struct {
-	ID     int
-	UserID int
-	Status string
+	ID       int
+	UserID   int
+	Username string
+	Status   string
 }
