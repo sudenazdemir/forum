@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderatör Panel</title>
+    <link rel="stylesheet" href="../styles/home.css">
+    <link href="https://fonts.cdnfonts.com/css/montreal?styles=28831" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    
+    <header>
+        <div class="pages">
+            <img class="logo_image" src="../docs/WG.png" alt="logo">
+            <a class="page_label" href="/"><i class="fa-solid fa-house"></i> Ana Sayfa</a>
+            <a class="page_label" href="/create_post">Gönderi Oluştur</a>
+            <a class="page_label" href="/profile"><i class="fa-solid fa-user"></i> Profil</a>
+            <form action="/logout" method="post" class="logout_form">
+                <button type="submit">Çıkış Yap</button>
+            </form>
+        </div>
+    </header>
+    
+    <main>
+        <div class="posts">
+            {{ range .Posts }}
+            <div class="post" data-post-id="{{.ID}}">
+                <h1>{{.CategoryName}}</h1>
+                <h2>{{.Title}}</h2>
+                <p><strong>Gönderi:</strong> {{.Content}}</p>
+                <p><strong>Oluşturan Hesap:</strong> {{.Username}}</p>
+                {{ if .Image }}
+                <img src="{{.Image}}" alt="Post Image">
+                {{ end }}
+                <p><strong>Oluşturulma Tarihi:</strong> {{.CreatedAt}}</p>
+                {{ if $.LoggedIn }}
+                <div class="like-dislike-buttons">
+                    <form method="post" action="/like" style="display:inline;">
+                        <input type="hidden" name="postId" value="{{.ID}}">
+                        <button type="submit" class="like-button"><i class="fas fa-thumbs-up"></i></button>
+                        <span class="like-count">{{.Likes}}</span>
+                    </form>
+                    <form method="post" action="/dislike" style="display:inline;">
+                        <input type="hidden" name="postId" value="{{.ID}}">
+                        <button type="submit" class="dislike-button"><i class="fas fa-thumbs-down"></i></button>
+                        <span class="dislike-count">{{.Dislikes}}</span>
+                    </form>
+                </div>
+                {{end}}
+                <div class="comments-container">
+                    <p>YORUMLAR: {{len .Comments}}</p>
+                    <button class="toggle-comments">Göster/Gizle</button>
+                    <div class="comments" style="display: none;">
+                        {{ range .Comments }}
+                        <div class="comment" data-comment-id="{{.ID}}">
+                            <p><em>Kullanıcı: {{ .Username }}</em></p>
+                            <p>Yorum: {{ .Content }}</p>
+                            <p>Oluşturma Tarihi: {{ .CreatedAt }}</p>
+                            {{ if $.LoggedIn }}
+                            <div class="comment-like-dislike-buttons">
+                                <form method="post" action="/like_comment" style="display:inline;">
+                                    <input type="hidden" name="commentId" value="{{.ID}}">
+                                    <button type="submit" class="like-button"><i class="fas fa-thumbs-up"></i></button>
+                                    <span class="like-count">{{.Likes}}</span>
+                                </form>
+                                <form method="post" action="/dislike_comment" style="display:inline;">
+                                    <input type="hidden" name="commentId" value="{{.ID}}">
+                                    <button type="submit" class="dislike-button"><i class="fas fa-thumbs-down"></i></button>
+                                    <span class="dislike-count">{{.Dislikes}}</span>
+                                </form>
+                            </div>
+                            {{end}}
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+                <br>
+                {{ if $.LoggedIn }}
+                <form class="comment_form" method="post" data-post-id="{{.ID}}">
+                    <input type="hidden" name="postId" value="{{.ID}}">
+                    <textarea name="comment" placeholder="Yorumunuzu buraya girin..." required></textarea>
+                    <button type="submit" class="submit-comment">Yorum Yap</button>
+                </form>
+                {{else}}
+                <div class="alert">Beğeni ya da yorum için <a href="/login">giriş yapın</a></div>
+                {{ end }}
+                <br>
+                <form action="/delete_post?id={{ .ID }}" method="post" onsubmit="return deletePost(this)">
+                    <button type="submit">Gönderiyi Sil</button>
+                </form>
+            </div>
+            {{ end }}
+        </div>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Toggle comments visibility
+            function toggleComments(event) {
+                const commentsContainer = event.target.parentElement.querySelector(".comments");
+                commentsContainer.style.display = commentsContainer.style.display === "none" ? "block" : "none";
+            }
+
+            // Handle clicking on post to view post detail or toggle comments
+            document.querySelector(".posts").addEventListener("click", function (event) {
+                const target = event.target;
+                if (target.classList.contains("toggle-comments")) {
+                    toggleComments(event);
+                } else if (target.closest(".post")) {
+                    const postId = target.closest(".post").getAttribute("data-post-id");
+                    // Prevent navigation if clicking within the post area but not on specific buttons
+                    if (!target.matches(".submit-comment, .comment_form, textarea")) {
+                        window.location.href = `/view_post?id=${postId}`;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

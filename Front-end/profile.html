@@ -44,11 +44,11 @@
         <a class="admin_link" href="panel">Admin Paneli Giriş</a>
         {{ end }}
         {{ if eq .Role "moderator" }}
-        <a class="admin_link" href="panel">Moedaratör Paneli Giriş</a>
+        <a class="admin_link" href="moderatorpanel">Moderatör Paneli Giriş</a>
         {{ end }}
         {{ if eq .Role "user" }}
         <form action="/request_mod" method="POST">
-            <button type="submit">Moedaratör Ol</button>
+            <button type="submit">Moderatör Ol</button>
         </form>
         {{ end }}
     </div>

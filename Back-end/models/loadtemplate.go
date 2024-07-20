@@ -9,7 +9,7 @@ import (
 var tmplCache = make(map[string]*template.Template)
 
 func LoadTemplates() {
-	templates := []string{"login", "register", "home", "profile", "panel", "create_post", "view_post"}
+	templates := []string{"login", "register", "home", "profile", "panel", "create_post", "view_post", "moderatorpanel"}
 
 	for _, tmpl := range templates {
 		path := filepath.Join(".", "Front-end", tmpl+".html")
